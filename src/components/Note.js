@@ -1,5 +1,12 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useQuery } from '@apollo/client';
+
+// import logged in user UI components
+import NoteUser from './NoteUser';
+
+// import the IS_LOGGED_IN local query
+import { IS_LOGGED_IN } from '../gql/query';
 
 // import the format utility from 'date-fns'
 import {format} from 'date-fns';
@@ -33,22 +40,35 @@ const UserActions = styled.div`
 // {format(note.createAt, 'MMM Do YYYY')} Favorites:{' '}
 
 const Note = ({note}) => {
+
+    const { loading, error, data } = useQuery(IS_LOGGED_IN);
+    // if the data is loading, display a loading message
+    if(loading) return <p>Loading...</p>;
+    // if there is an error fetching the data, display an error message
+    if(error) return <p>Error!</p>;
+
     return (
         <StyledNote>
             <MetaData>
                 <MetaInfo>
                     <img
                         src={note.author.avatar}
-                        alt="{note.author.username} avatar"
+                        alt={`${note.author.username} avatar`}
                         height="50px" />
                 </MetaInfo>
                 <MetaInfo>
                     <em>by</em> {note.author.username} <br />
                     {format(note.createAt, 'MMM Do YYYY')}
                 </MetaInfo>
-                <UserActions>
-                    <em>Favorites:</em> {note.favoriteCount}
-                </UserActions>
+                { data.isLoggedIn ? (
+                    <UserActions>
+                        <NoteUser note={note} />
+                    </UserActions>
+                ) : (
+                    <UserActions>
+                        <em>Favorites:</em> {note.favoriteCount}
+                    </UserActions>
+                ) }
             </MetaData>
             <ReactMarkdown source={note.content} />
         </StyledNote>
